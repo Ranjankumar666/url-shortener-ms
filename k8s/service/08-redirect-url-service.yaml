@@ -1,0 +1,107 @@
+apiVersion: v1
+kind: Service
+metadata:
+    name: redirect-url-service
+    namespace: url-shortener
+spec:
+    selector:
+        app: redirect-url-service
+    ports:
+        - port: 80
+          targetPort: 80
+    type: ClusterIP
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+    name: redirect-url-service
+    namespace: url-shortener
+spec:
+    replicas: 2
+    selector:
+        matchLabels:
+            app: redirect-url-service
+    template:
+        metadata:
+            labels:
+                app: redirect-url-service
+        spec:
+            # initContainers:
+            #     - name: wait-for-deps
+            #       image: busybox:1.35
+            #       command:
+            #           [
+            #               'sh',
+            #               '-c',
+            #               'until nc -z redirect-url-db 5432 && nc -z redirect-url-cache 6379 && nc -z mq 9092; do echo waiting for dependencies; sleep 2; done',
+            #           ]
+            containers:
+                - name: redirect-url-service
+                  image: docker.io/ranjankumar2000/url-shortner-redirect-url-service:latest # Update with your image registry
+                  imagePullPolicy: Always
+                  ports:
+                      - containerPort: 80
+                  env:
+                      - name: SERVICE_NAME
+                        value: 'REDIRECT-URL-SERVICE'
+                      - name: DB_HOST
+                        valueFrom:
+                            configMapKeyRef:
+                                name: app-config
+                                key: REDIRECT_URL_DB_HOST
+                      - name: DB_NAME
+                        valueFrom:
+                            configMapKeyRef:
+                                name: app-config
+                                key: REDIRECT_URL_DB_NAME
+                      - name: DB_USER
+                        valueFrom:
+                            configMapKeyRef:
+                                name: app-config
+                                key: REDIRECT_URL_DB_USER
+                      - name: DB_PASSWORD
+                        valueFrom:
+                            secretKeyRef:
+                                name: db-secret
+                                key: POSTGRES_PASSWORD
+                      - name: REDIS_HOST
+                        valueFrom:
+                            configMapKeyRef:
+                                name: app-config
+                                key: REDIRECT_URL_REDIS_HOST
+                      - name: REDIS_PORT
+                        valueFrom:
+                            configMapKeyRef:
+                                name: app-config
+                                key: REDIRECT_URL_REDIS_PORT
+                      - name: KAFKA_HOST
+                        valueFrom:
+                            configMapKeyRef:
+                                name: app-config
+                                key: KAFKA_HOST
+                      - name: KAFKA_PORT
+                        valueFrom:
+                            configMapKeyRef:
+                                name: app-config
+                                key: KAFKA_PORT
+                      - name: PORT
+                        value: '80'
+                  resources:
+                      requests:
+                          memory: '128Mi'
+                          cpu: '100m'
+                      limits:
+                          memory: '512Mi'
+                          cpu: '300m'
+                  livenessProbe:
+                      tcpSocket:
+                          port: 80
+                      initialDelaySeconds: 15
+                      periodSeconds: 10
+                      failureThreshold: 5
+                  readinessProbe:
+                      tcpSocket:
+                          port: 80
+                      initialDelaySeconds: 15
+                      periodSeconds: 5
+                      failureThreshold: 5

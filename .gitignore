@@ -1,0 +1,76 @@
+# ─── Node.js ───────────────────────────────────────────────────────────────────
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+package-lock.json
+yarn.lock
+.pnp
+.pnp.js
+
+# ─── Environment Variables ─────────────────────────────────────────────────────
+.env
+.env.*
+!.env.example
+
+# ─── Logs ─────────────────────────────────────────────────────────────────────
+logs/
+*.log
+
+# ─── Build Output ─────────────────────────────────────────────────────────────
+dist/
+build/
+out/
+
+# ─── Kubernetes ───────────────────────────────────────────────────────────────
+# Ignore local kubeconfig overrides
+kubeconfig
+kubeconfig.yaml
+*.kubeconfig
+
+# kind cluster config with sensitive data
+kind-config-local.yaml
+
+# ─── Podman / Docker ──────────────────────────────────────────────────────────
+.dockerignore.local
+docker-compose.override.yml
+podman-compose.override.yml
+
+# ─── k6 ───────────────────────────────────────────────────────────────────────
+k6-results/
+*.k6.json
+
+# ─── OS ───────────────────────────────────────────────────────────────────────
+# Windows
+Thumbs.db
+Desktop.ini
+$RECYCLE.BIN/
+
+# macOS
+.DS_Store
+.AppleDouble
+.LSOverride
+
+# Linux
+*~
+.nfs*
+
+# ─── IDE ──────────────────────────────────────────────────────────────────────
+.vscode/*
+!.vscode/extensions.json
+!.vscode/settings.json
+.idea/
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
+
+# ─── Misc ─────────────────────────────────────────────────────────────────────
+*.pem
+*.key
+*.cert
+*.crt
+coverage/
+.nyc_output/

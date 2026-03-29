@@ -1,0 +1,17 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+    name: app-config
+    namespace: url-shortener
+data:
+    REDIRECT_URL_DB_HOST: 'redirect-url-db'
+    REDIRECT_URL_DB_NAME: 'urls'
+    REDIRECT_URL_DB_USER: 'postgres'
+    REDIRECT_URL_REDIS_HOST: 'redirect-url-cache'
+    REDIRECT_URL_REDIS_PORT: '6379'
+    STORE_URL_DB_HOST: 'store-url-db'
+    STORE_URL_DB_NAME: 'urls'
+    STORE_URL_DB_USER: 'postgres'
+    KAFKA_HOST: 'mq'
+    KAFKA_PORT: '9092'
+    WEB_HOST: 'http://localhost:8080/r/'

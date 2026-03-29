@@ -1,0 +1,5 @@
+{
+	"yaml.schemas": {
+		"https://www.schemastore.org/kustomization.json": "file:///d%3A/Programming/url-shortner/k8s/ingress/11-ingress.yaml"
+	}
+}

@@ -1,0 +1,102 @@
+
+# Storage management
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: kafka-pvc
+  namespace: url-shortener
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 400Mi
+---
+#Network Exposure
+apiVersion: v1
+kind: Service
+metadata:
+  name: mq
+  namespace: url-shortener
+spec:
+  selector:
+    app: mq
+  ports:
+    - name: plaintext
+      port: 9092
+      targetPort: 9092
+    - name: controller
+      port: 9093
+      targetPort: 9093
+  clusterIP: None  # Headless service for StatefulSet
+---
+# Pod
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: mq
+  namespace: url-shortener
+spec:
+  serviceName: mq
+  replicas: 1
+  selector:
+    matchLabels:
+      app: mq
+  template:
+    metadata:
+      labels:
+        app: mq
+    spec:
+      containers:
+      - name: kafka
+        image: apache/kafka:4.2.0
+        ports:
+        - containerPort: 9092
+          name: plaintext
+        - containerPort: 9093
+          name: controller
+        env:
+        - name: KAFKA_NODE_ID
+          value: "1"
+        - name: KAFKA_PROCESS_ROLES
+          value: "broker,controller"
+        - name: KAFKA_LISTENERS
+          value: "PLAINTEXT://0.0.0.0:9092,CONTROLLER://0.0.0.0:9093"
+        - name: KAFKA_ADVERTISED_LISTENERS
+          value: "PLAINTEXT://mq.url-shortener.svc.cluster.local:9092"
+        - name: KAFKA_CONTROLLER_LISTENER_NAMES
+          value: "CONTROLLER"
+        - name: KAFKA_LISTENER_SECURITY_PROTOCOL_MAP
+          value: "CONTROLLER:PLAINTEXT,PLAINTEXT:PLAINTEXT"
+        - name: KAFKA_CONTROLLER_QUORUM_VOTERS
+          value: "1@mq.url-shortener.svc.cluster.local:9093"
+        - name: KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR
+          value: "1"
+        - name: KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR
+          value: "1"
+        - name: KAFKA_TRANSACTION_STATE_LOG_MIN_ISR
+          value: "1"
+        - name: KAFKA_GROUP_INITIAL_REBALANCE_DELAY_MS
+          value: "0"
+        - name: KAFKA_NUM_PARTITIONS
+          value: "3"
+        volumeMounts:
+        - name: kafka-storage
+          mountPath: /var/lib/kafka/data
+        resources:
+          requests:
+            memory: "256Mi"
+            cpu: "200m"
+          limits:
+            memory: "1Gi"
+            cpu: "500m"
+        livenessProbe:
+          tcpSocket:
+            port: 9092
+          initialDelaySeconds: 30
+          periodSeconds: 10
+          failureThreshold: 3
+      volumes:
+      - name: kafka-storage
+        persistentVolumeClaim:
+          claimName: kafka-pvc
