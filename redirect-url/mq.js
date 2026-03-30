@@ -52,14 +52,23 @@ export const consume = async () => {
 	});
 
 	consumer.run({
-		eachMessage: async ({ topic, message }) => {
+		eachMessage: async ({ topic, message, partition }) => {
 			try {
 				const data = JSON.parse(message.value);
 				await addDoc(data);
+				await consumer.commitOffsets([
+					{
+						partition,
+						topic,
+						offset: (+message.offset + 1).toString(),
+					},
+				]);
 			} catch (err) {
 				console.log('Error while processing ' + topic);
 				console.log(err.message);
 			}
 		},
+
+		autoCommit: false,
 	});
 };

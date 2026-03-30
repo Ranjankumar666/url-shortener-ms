@@ -24,7 +24,7 @@ export const getDocByPk = async (pk) => {
 export const addDoc = async ({ id, url }) => {
 	if (!checkBF(id)) await addToBF(id);
 
-	const cachedDoc = await redis.get(pk);
+	const cachedDoc = await redis.get(id);
 	if (!cachedDoc) await addToCache(id, JSON.stringify({ id, url }));
 
 	const doc = await Urls.create({

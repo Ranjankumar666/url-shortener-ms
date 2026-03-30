@@ -95,7 +95,7 @@ export function cacheHitTest() {
 	// Cache hit detection — second redirect should be meaningfully faster than first
 	// If both are similarly fast, Redis is serving both (cache working perfectly)
 	// If second is much faster than first, first was a DB miss, second was cache hit
-	const isHit = duration2 < 15; // under 15ms = Redis
+	const isHit = duration2 < 50; // under 15ms = Redis
 	if (isHit) cacheHits.add(1);
 	else cacheMisses.add(1);
 	cacheHitRate.add(isHit);

@@ -13,7 +13,6 @@ app.get('/r/:token', async function (req, res) {
 
 	//TODO: Get the doc from Database
 	const doc = await getDocByPk(id);
-	console.log('Data fetched: ', doc);
 	//TODO: Send a redirect response
 	if (!doc) {
 		return res.status(404).json({

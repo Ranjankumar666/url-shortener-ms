@@ -37,7 +37,7 @@ export const options = {
 
 // Runs once before the test — seeds tokens for redirect scenario
 export function setup() {
-	console.log('Seeding tokens for redirect scenario...');
+	// console.log('Seeding tokens for redirect scenario...');
 	const tokens = [];
 
 	for (let i = 0; i < 20; i++) {
@@ -49,7 +49,7 @@ export function setup() {
 			{ headers: { 'Content-Type': 'application/json' } },
 		);
 
-		console.log(`seed [${i}] status: ${res.status} body: ${res.body}`);
+		// console.log(`seed [${i}] status: ${res.status} body: ${res.body}`);
 
 		if (res.status === 201) {
 			try {
@@ -60,7 +60,7 @@ export function setup() {
 		}
 	}
 
-	console.log(`Seeded ${tokens.length} tokens`);
+	// console.log(`Seeded ${tokens.length} tokens`);
 	return { tokens };
 }
 
