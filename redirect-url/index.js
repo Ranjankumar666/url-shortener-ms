@@ -1,7 +1,7 @@
 import express from 'express';
 import { init } from './db.js';
-import { consume, ensureTopicExists, waitForKafka } from './mq.js';
-import { getDocByPk } from './data_fetch.js';
+import { consume, ensureTopicExists, produce, waitForKafka } from './mq.js';
+import { getDocByPk, updateDoc } from './data_fetch.js';
 import { decode } from './codec.js';
 const PORT = process.env.PORT || 6000;
 const app = express();
@@ -19,6 +19,10 @@ app.get('/r/:token', async function (req, res) {
 			msg: 'Url not found',
 		});
 	}
+
+	await updateDoc({ id });
+	produce({ id });
+
 	res.redirect(302, doc.url);
 });
 

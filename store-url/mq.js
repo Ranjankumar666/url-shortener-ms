@@ -10,7 +10,10 @@ const kafka = new Kafka({
 const isConnected = false;
 
 const admin = kafka.admin();
-const TOPIC = 'db-add';
+const TOPICS = {
+	ADD: 'db-add',
+	UPDATE: 'db-update',
+};
 
 const producer = kafka.producer();
 export const connect = async () => {
@@ -18,6 +21,10 @@ export const connect = async () => {
 		await producer.connect();
 	}
 };
+
+const consumer = kafka.consumer({
+	groupId: SERVICE_NAME,
+});
 
 export const disconnet = async () => {
 	if (isConnected) {
@@ -33,6 +40,7 @@ export const waitForKafka = async (retries = 100, delayMs = 3000) => {
 			return;
 		} catch (err) {
 			console.log(`Waiting for Kafka broker... (${i + 1}/${retries})`);
+			console.log(err.message);
 			await new Promise((r) => setTimeout(r, delayMs));
 		}
 	}
@@ -41,22 +49,56 @@ export const waitForKafka = async (retries = 100, delayMs = 3000) => {
 
 export const ensureTopicExists = async () => {
 	const topics = await admin.listTopics();
-	if (!topics.includes(TOPIC)) {
-		console.log(`Creating topic: ${TOPIC}`);
-		await admin.createTopics({
-			topics: [{ topic: TOPIC, numPartitions: 1, replicationFactor: 1 }],
-		});
-		console.log(`Topic ${TOPIC} created`);
-	} else {
-		console.log(`Topic ${TOPIC} already exists`);
+
+	for (let topic in Object.keys(TOPICS)) {
+		if (!topics.includes(topic)) {
+			console.log(`Creating topic: ${topic}`);
+			await admin.createTopics({
+				topics: [
+					{ topic: topic, numPartitions: 1, replicationFactor: 1 },
+				],
+			});
+			console.log(`Topic ${topic} created`);
+		} else {
+			console.log(`Topic ${topic} already exists`);
+		}
 	}
+};
+
+export const consume = async () => {
+	await consumer.connect();
+	await consumer.subscribe({
+		topic: TOPICS.UPDATE,
+		fromBeginning: true,
+	});
+
+	consumer.run({
+		eachMessage: async ({ topic, message, partition }) => {
+			try {
+				const { id } = JSON.parse(message.value);
+				await addDoc(data);
+				await consumer.commitOffsets([
+					{
+						partition,
+						topic,
+						offset: (+message.offset + 1).toString(),
+					},
+				]);
+			} catch (err) {
+				console.log('Error while processing ' + topic);
+				console.log(err.message);
+			}
+		},
+
+		autoCommit: false,
+	});
 };
 
 export const produce = async (data) => {
 	await connect();
 
 	await producer.send({
-		topic: TOPIC,
+		topic: TOPICS.ADD,
 		acks: -1,
 		messages: [
 			{

@@ -34,3 +34,13 @@ export const addDoc = async ({ id, url }) => {
 
 	return doc;
 };
+
+export const updateDoc = async ({ id }) => {
+	const doc = await Urls.increment(['clicked'], {
+		by: 1,
+		where: {
+			id,
+		},
+	});
+};
+

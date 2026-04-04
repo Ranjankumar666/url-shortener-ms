@@ -3,7 +3,10 @@ import { addDoc } from './data_fetch.js';
 import { Kafka } from 'kafkajs';
 const SERVICE_NAME = process.env.SERVICE_NAME;
 const GROUP_ID = SERVICE_NAME;
-const TOPIC = 'db-add';
+const TOPICS = {
+	ADD: 'db-add',
+	UPDATE: 'db-update',
+};
 
 const kafka = new Kafka({
 	clientId: SERVICE_NAME,
@@ -14,6 +17,9 @@ const admin = kafka.admin();
 
 const consumer = kafka.consumer({
 	groupId: GROUP_ID,
+});
+const producer = kafka.producer({
+	allowAutoTopicCreation: true,
 });
 
 export const waitForKafka = async (retries = 100, delayMs = 3000) => {
@@ -33,21 +39,26 @@ export const waitForKafka = async (retries = 100, delayMs = 3000) => {
 
 export const ensureTopicExists = async () => {
 	const topics = await admin.listTopics();
-	if (!topics.includes(TOPIC)) {
-		console.log(`Creating topic: ${TOPIC}`);
-		await admin.createTopics({
-			topics: [{ topic: TOPIC, numPartitions: 1, replicationFactor: 1 }],
-		});
-		console.log(`Topic ${TOPIC} created`);
-	} else {
-		console.log(`Topic ${TOPIC} already exists`);
+
+	for (let topic in Object.keys(TOPICS)) {
+		if (!topics.includes(topic)) {
+			console.log(`Creating topic: ${topic}`);
+			await admin.createTopics({
+				topics: [
+					{ topic: topic, numPartitions: 1, replicationFactor: 1 },
+				],
+			});
+			console.log(`Topic ${topic} created`);
+		} else {
+			console.log(`Topic ${topic} already exists`);
+		}
 	}
 };
 
 export const consume = async () => {
 	await consumer.connect();
 	await consumer.subscribe({
-		topic: TOPIC,
+		topic: TOPICS.ADD,
 		fromBeginning: true,
 	});
 
@@ -71,4 +82,22 @@ export const consume = async () => {
 
 		autoCommit: false,
 	});
+};
+
+export const produce = async ({ id }) => {
+	await producer.connect();
+	await producer.send([
+		{
+			topic: TOPICS.UPDATE,
+			ack: -1,
+			messages: [
+				{
+					value: JSON.stringify({ id }, (key, value) => {
+						if (typeof value === 'bigint') return value.toString();
+						return value;
+					}),
+				},
+			],
+		},
+	]);
 };

@@ -28,6 +28,10 @@ export const Urls = sequelize.define('urls', {
 		type: DataTypes.STRING,
 		allowNull: false,
 	},
+	clicked: {
+		type: DataTypes.INTEGER,
+		defaultValue: 0,
+	},
 });
 
 export const init = async () => {
